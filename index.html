@@ -4,56 +4,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Counter and Chat Room</title>
+    <title>Page Counter & Chatroom</title>
     <style>
         body {
             background-color: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
             font-family: Arial, sans-serif;
             font-size: 24px;
-            color: white;
-            padding: 20px;
         }
         
-        #chat-container {
-            max-width: 600px;
-            margin: 0 auto;
-            border: 1px solid white;
-            padding: 20px;
-        }
-        
-        #messages {
-            max-height: 300px;
+        #chatBox {
+            width: 70%;
+            height: 400px;
             overflow-y: scroll;
-            margin-bottom: 20px;
+            border: 1px solid white;
+            margin-top: 20px;
+            padding: 10px;
         }
     </style>
     <!-- Firebase SDKs -->
-   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 </head>
 
 <body>
-    <div id="chat-container">
-        <div id="messages">
-            <!-- Chat messages will appear here -->
-        </div>
 
-        <div id="input-container">
-            <input type="text" id="username" placeholder="Enter your username" />
-            <input type="text" id="message-input" placeholder="Enter your message" />
-            <button onclick="sendMessage()">Send</button>
-        </div>
-    </div>
-
-    <div style="text-align: center; margin-top: 20px;">
+    <div>
         You are visitor number:
         <span id="counter">Loading...</span>
     </div>
 
-    <script>
-        console.log("Script started.");
+    <div>
+        Username: <input type="text" id="username">
+        Message: <input type="text" id="message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    
+    <div id="chatBox"></div>
 
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
             authDomain: "warwideweb-4ba1c.firebaseapp.com",
@@ -64,16 +58,11 @@
             measurementId: "G-CB4SR9VKSB"
         };
 
-        try {
-            const app = firebase.initializeApp(firebaseConfig);
-            console.log("Firebase initialized.");
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-        }
-
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Page counter logic
+        // Page Counter Logic
         const pageviewsDoc = db.collection('metadata').doc('pageviews');
 
         pageviewsDoc.get().then(doc => {
@@ -88,39 +77,38 @@
             console.error("Error fetching pageviews data:", error);
         });
 
-        // Chat room logic
-        const messagesDiv = document.getElementById('messages');
-        const usernameInput = document.getElementById('username');
-        const messageInput = document.getElementById('message-input');
+        // Chatroom Logic
+        const messagesCollection = db.collection('messages');
+        const chatBox = document.getElementById('chatBox');
+
+        // Fetching previous messages and listening to new ones
+        messagesCollection.orderBy('timestamp').onSnapshot(snapshot => {
+            chatBox.innerHTML = '';  // Clear the chat box first
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                chatBox.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+            });
+        });
 
         function sendMessage() {
-            const username = usernameInput.value;
-            const messageText = messageInput.value;
-
-            if (username && messageText) {
-                db.collection('chat').add({
-                    username: username,
-                    message: messageText,
+            const usernameInput = document.getElementById('username').value;
+            const messageInput = document.getElementById('message').value;
+            
+            if (usernameInput && messageInput) {
+                messagesCollection.add({
+                    username: usernameInput,
+                    message: messageInput,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    document.getElementById('message').value = '';
+                }).catch(error => {
+                    console.error("Error sending message:", error);
                 });
-
-                messageInput.value = '';
             }
         }
 
-        db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
-            messagesDiv.innerHTML = '';
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                messagesDiv.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
-            });
-        });
     </script>
 </body>
-
-</html>
-
 
 </html>
 
