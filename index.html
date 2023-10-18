@@ -16,56 +16,41 @@
             font-size: 24px;
         }
     </style>
-    <!-- Firebase App (the core Firebase SDK) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <!-- Add Firebase products that you want to use -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body>
     <div>
         You are visitor number: 
-        <span id="counter">...</span>
+        <span id="counter">Loading...</span>
     </div>
     <script>
-        (async function() {
-            // Your Firebase configuration
-            const firebaseConfig = {
-                apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
-                authDomain: "warwideweb-4ba1c.firebaseapp.com",
-                projectId: "warwideweb-4ba1c",
-                storageBucket: "warwideweb-4ba1c.appspot.com",
-                messagingSenderId: "886872248807",
-                appId: "1:886872248807:web:d686c92735731abf606d42",
-                measurementId: "G-CB4SR9VKSB"
-            };
+        const firebaseConfig = {
+            // Your firebase config data
+        };
 
-            // Initialize Firebase
-            const app = firebase.initializeApp(firebaseConfig);
-            const db = firebase.firestore();
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-            // Reference to the 'pageviews' document
+        async function updateAndViewCount() {
             const pageviewsDoc = db.collection('metadata').doc('pageviews');
-
-            // Fetch current count
-            let doc = await pageviewsDoc.get();
-
+            const doc = await pageviewsDoc.get();
+            
             if (doc.exists) {
-                let count = doc.data().count;
+                const currentCount = doc.data().count;
+                document.getElementById('counter').textContent = currentCount;
 
-                // Update the counter on the page
-                document.getElementById('counter').innerText = count;
-
-                // Increment the page view count in Firestore
-                await pageviewsDoc.update({
-                    count: firebase.firestore.FieldValue.increment(1)
-                });
+                // Now incrementing the counter in Firestore
+                await pageviewsDoc.update({ count: currentCount + 1 });
             } else {
-                // This handles the case where the document might not exist yet.
-                pageviewsDoc.set({ count: 1 });
-                document.getElementById('counter').innerText = '1';
+                console.error("No pageviews document found in Firestore");
             }
-        })();
+        }
+
+        updateAndViewCount();
     </script>
 </body>
 </html>
