@@ -186,55 +186,93 @@
         }
 
         async function sendMessage() {
-            const username = usernameInput.value;
-            const messageText = messageInput.value;
+            const username = usernameInput.value.trim();
+            const messageText = messageInput.value.trim();
             const imageFile = document.getElementById('image-input').files[0];
 
             if (!username || (!messageText && !imageFile)) return;
 
-            let imageUrl;
+            const chatData = {
+                username: username,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (messageText) chatData.message = messageText;
+
             if (imageFile) {
                 const imageRef = storageRef.child(`chat-images/${imageFile.name}`);
                 await imageRef.put(imageFile);
-                imageUrl = await imageRef.getDownloadURL();
+                chatData.imageUrl = await imageRef.getDownloadURL();
             }
 
-            db.collection('chat').add({
-                username: username,
-                message: messageText,
-                imageUrl: imageUrl,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
+            db.collection('chat').add(chatData).then(() => {
                 messageInput.value = '';
                 document.getElementById('image-preview').style.display = 'none';
                 document.getElementById('image-input').value = '';
+            }).catch(error => {
+                console.error("Error sending message:", error);
             });
         }
 
-        db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
-            messagesDiv.innerHTML = '';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                let content = `<p><b>${data.username}</b>: ${data.message || ''}`;
-                if (data.imageUrl) {
-                    content += `<br><img src="${data.imageUrl}" style="max-width:200px; cursor: pointer;" onclick="enlargeImage('${data.imageUrl}')">`;
-                }
-                content += `</p>`;
-                messagesDiv.innerHTML += content;
-            });
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        });
+        function createMessageElement(data, docId) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.dataset.id = docId;
 
-        function enlargeImage(url) {
-            document.getElementById('enlargedImage').src = url;
-            document.getElementById('enlargedImageContainer').style.display = 'flex';
+            if (data.username) {
+                const usernameDiv = document.createElement('div');
+                usernameDiv.textContent = data.username;
+                usernameDiv.classList.add('username');
+                messageDiv.appendChild(usernameDiv);
+            }
+
+            if (data.message) {
+                const textDiv = document.createElement('div');
+                textDiv.textContent = data.message;
+                textDiv.classList.add('text');
+                messageDiv.appendChild(textDiv);
+            }
+
+            if (data.imageUrl) {
+                const imageDiv = document.createElement('div');
+                const imageElem = document.createElement('img');
+                imageElem.src = data.imageUrl;
+                imageElem.style.maxWidth = '100%';
+                imageElem.onclick = function() {
+                    showEnlargedImage(data.imageUrl);
+                };
+                imageDiv.appendChild(imageElem);
+                messageDiv.appendChild(imageDiv);
+            }
+
+            return messageDiv;
+        }
+
+        function showEnlargedImage(src) {
+            const enlargedImg = document.getElementById('enlargedImage');
+            const enlargedContainer = document.getElementById('enlargedImageContainer');
+
+            enlargedImg.src = src;
+            enlargedContainer.style.display = 'flex';
         }
 
         function closeEnlargedImage() {
-            document.getElementById('enlargedImageContainer').style.display = 'none';
+            const enlargedContainer = document.getElementById('enlargedImageContainer');
+            enlargedContainer.style.display = 'none';
         }
+
+        db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
+            const changes = snapshot.docChanges();
+            changes.forEach(change => {
+                if (change.type === 'added') {
+                    messagesDiv.appendChild(createMessageElement(change.doc.data(), change.doc.id));
+                }
+            });
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
     </script>
 </body>
 
 </html>
+
 
