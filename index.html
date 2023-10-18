@@ -11,7 +11,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 300vh;
+            height: 100vh;
             color: white;
             font-family: Arial, sans-serif;
             font-size: 24px;
@@ -19,13 +19,12 @@
     </style>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 
 <body>
     <div>
-        You are visitor number 300:
+        You are visitor number:
         <span id="counter">Loading...</span>
     </div>
     <script>
@@ -43,31 +42,24 @@
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        async function updateAndViewCount() {
-           // After Firebase Initialization
-const pageviewsDoc = db.collection('metadata').doc('pageviews');
+        const pageviewsDoc = db.collection('metadata').doc('pageviews');
 
-pageviewsDoc.get().then(doc => {
-    if (doc.exists) {
-        console.log("Pageviews data from Firestore:", doc.data());
-    } else {
-        console.error("No pageviews data found!");
-    }
-}).catch(error => {
-    console.error("Error fetching pageviews data:", error);
-});
-
-                // Now incrementing the counter in Firestore
-                await pageviewsDoc.update({ count: currentCount + 1 });
+        pageviewsDoc.get().then(doc => {
+            if (doc.exists) {
+                let currentCount = doc.data().count;
+                document.getElementById('counter').textContent = currentCount;
+                pageviewsDoc.update({ count: currentCount + 1 });
             } else {
-                console.error("No pageviews document found in Firestore");
+                console.error("No pageviews data found!");
             }
-        }
+        }).catch(error => {
+            console.error("Error fetching pageviews data:", error);
+        });
 
-        updateAndViewCount();
     </script>
 </body>
 
 </html>
+
 
 
