@@ -4,17 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Counter and Chat Room with Image Upload</title>
+    <title>Page Counter and Chat Room</title>
     <style>
-        /* ... [Your previous styles go here] ... */
-
-        #image-preview {
-            max-width: 200px;
-            display: none;
-            margin-top: 10px;
-        }
+        /* ... [Your Existing Styles] ... */
     </style>
-
+    
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -30,7 +24,7 @@
             <input type="text" id="username" placeholder="Username" />
             <input type="text" id="message-input" placeholder="Message" />
             <input type="file" id="image-input" accept="image/*" onchange="previewImage()" />
-            <img id="image-preview" />
+            <img id="image-preview" style="max-width: 200px; display: none; margin-top: 10px;" />
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
@@ -42,7 +36,7 @@
 
     <script>
         const firebaseConfig = {
-            // ... [Your Firebase config goes here] ...
+            /* ... [Your Existing Firebase Configuration] ... */
         };
 
         try {
@@ -52,37 +46,32 @@
         }
 
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         const pageviewsDoc = db.collection('metadata').doc('pageviews');
         const messagesDiv = document.getElementById('messages');
         const usernameInput = document.getElementById('username');
         const messageInput = document.getElementById('message-input');
 
-        // ... [Your previous JS code for pageviews and chat message sending goes here] ...
+        pageviewsDoc.get().then(doc => {
+            /* ... [Your Existing Pageviews Code] ... */
+        }).catch(error => {
+            console.error("Error fetching pageviews data:", error);
+        });
 
         function sendMessage() {
             const username = usernameInput.value.trim();
             const messageText = messageInput.value.trim();
             const imageInput = document.getElementById('image-input');
-            const imagePreview = document.getElementById('image-preview');
-
+            
             if (username && (messageText || imageInput.files.length)) {
-                let imageUrl;
-
                 if (imageInput.files.length > 0) {
                     const imageFile = imageInput.files[0];
-
-                    if (imageFile.size > 5 * 1024 * 1024) { // 5MB
-                        alert('Please choose an image smaller than 5MB.');
-                        return;
-                    }
-
-                    const storageRef = firebase.storage().ref(`chat-images/${Date.now()}_${imageFile.name}`);
+                    const storageRef = storage.ref(`chat-images/${Date.now()}_${imageFile.name}`);
                     storageRef.put(imageFile).then(snapshot => {
                         return snapshot.ref.getDownloadURL();
                     }).then(url => {
-                        imageUrl = url;
-                        addMessageToFirestore(imageUrl);
+                        addMessageToFirestore(url);
                     });
                 } else {
                     addMessageToFirestore();
@@ -96,10 +85,10 @@
                     imageUrl: imageUrl,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
                     messageInput.value = '';
                     imageInput.value = '';
-                    imagePreview.style.display = 'none';
+                    document.getElementById('image-preview').style.display = 'none';
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 });
             }
         }
@@ -110,12 +99,10 @@
 
             if (imageInput.files && imageInput.files[0]) {
                 const reader = new FileReader();
-
                 reader.onload = (e) => {
                     imagePreview.src = e.target.result;
                     imagePreview.style.display = 'block';
                 }
-
                 reader.readAsDataURL(imageInput.files[0]);
             }
         }
@@ -130,11 +117,7 @@
                 }
                 messages.push(messageHtml);
             });
-
-            // Display messages in ascending order
             messagesDiv.innerHTML = messages.reverse().join('');
-
-            // Scroll to the bottom
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
     </script>
