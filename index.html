@@ -28,6 +28,7 @@
         #messages {
             max-height: 300px;
             overflow-y: scroll;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
             margin-bottom: 20px;
             padding: 10px;
             border-bottom: 1px solid #eaeaea;
@@ -100,13 +101,25 @@
         }
 
         .chat-image {
-            max-width: 150px;  /* Fix the chat image size */
+            max-width: 150px;
             cursor: pointer;
             transition: transform 0.3s;
         }
 
         .chat-image:hover {
             transform: scale(1.1);
+        }
+
+        /* Responsiveness */
+        @media (max-width: 480px) {
+            #input-container {
+                flex-direction: column;
+            }
+
+            #username, #message-input, #input-container button {
+                flex: none;
+                width: 100%;
+            }
         }
     </style>
     <!-- Firebase SDKs -->
@@ -138,6 +151,7 @@
     <!-- New container for enlarged image -->
     <div id="enlargedImageContainer" onclick="closeEnlargedImage()">
         <img id="enlargedImage" src="" alt="Enlarged Image">
+    </div>
     </div>
 
     <script>
