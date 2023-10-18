@@ -151,21 +151,33 @@
             measurementId: "G-CB4SR9VKSB"
         };
 try {
-    firebase.initializeApp(firebaseConfig);
-} catch (error) {
-    console.error("Firebase initialization failed:", error);
-}
+        firebase.initializeApp(firebaseConfig);
+    } catch (error) {
+        console.error("Firebase initialization failed:", error);
+    }
 
-const db = firebase.firestore();
-const storage = firebase.storage();
-const storageRef = storage.ref();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+    const storageRef = storage.ref();
 
-const pageviewsDoc = db.collection('metadata').doc('pageviews');
-const messagesDiv = document.getElementById('messages');
-const usernameInput = document.getElementById('username');
-const messageInput = document.getElementById('message-input');
+    const pageviewsDoc = db.collection('metadata').doc('pageviews');
+    const messagesDiv = document.getElementById('messages');
+    const usernameInput = document.getElementById('username');
+    const messageInput = document.getElementById('message-input');
 
-        pageviewsDoc.get().then(doc => {
+    function getUsernameColor(username) {
+        let hash = 0;
+        for (let i = 0; i < username.length; i++) {
+            hash = (hash << 5) - hash + username.charCodeAt(i);
+            hash |= 0; // Convert to a 32-bit integer
+        }
+        const color = (hash & 0x00FFFFFF)
+            .toString(16)
+            .toUpperCase();
+        return '#' + '00000'.substring(0, 6 - color.length) + color;
+    }
+
+    pageviewsDoc.get().then(doc => {
             if (doc.exists) {
                 let currentCount = doc.data().count;
                 document.getElementById('counter').textContent = currentCount;
