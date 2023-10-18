@@ -187,12 +187,16 @@
             });
         }
 
-        db.collection('chat').orderBy('timestamp', 'desc').limit(200).onSnapshot(snapshot => {
-            let messages = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                messages.push(`<p><strong>${data.username}:</strong> ${data.message}</p>`);
-            });
+       db.collection('chat').orderBy('timestamp', 'desc').limit(200).onSnapshot(snapshot => {
+    let messages = [];
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        let messageContent = `<strong>${data.username}:</strong> ${data.message}`;
+        if (data.imageUrl) {
+            messageContent += ` <img src="${data.imageUrl}" alt="Uploaded image" style="max-width: 200px; display: block; margin-top: 10px;">`;
+        }
+        messages.push(`<p>${messageContent}</p>`);
+    });
 
             // Display messages in ascending order
             messagesDiv.innerHTML = messages.reverse().join('');
