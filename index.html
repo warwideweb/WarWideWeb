@@ -28,32 +28,36 @@
         <span id="counter">...</span>
     </div>
     <script>
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
-            authDomain: "warwideweb-4ba1c.firebaseapp.com",
-            projectId: "warwideweb-4ba1c",
-            storageBucket: "warwideweb-4ba1c.appspot.com",
-            messagingSenderId: "886872248807",
-            appId: "1:886872248807:web:d686c92735731abf606d42",
-            measurementId: "G-CB4SR9VKSB"
-        };
+        (async function() {
+            // Your Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
+                authDomain: "warwideweb-4ba1c.firebaseapp.com",
+                projectId: "warwideweb-4ba1c",
+                storageBucket: "warwideweb-4ba1c.appspot.com",
+                messagingSenderId: "886872248807",
+                appId: "1:886872248807:web:d686c92735731abf606d42",
+                measurementId: "G-CB4SR9VKSB"
+            };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+            // Initialize Firebase
+            const app = firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
 
-        // Reference to the 'pageviews' document
-        const pageviewsDoc = db.collection('metadata').doc('pageviews');
+            // Reference to the 'pageviews' document
+            const pageviewsDoc = db.collection('metadata').doc('pageviews');
 
-        // Display the page view count and increment it
-        pageviewsDoc.get().then((doc) => {
+            // Fetch current count
+            let doc = await pageviewsDoc.get();
+
             if (doc.exists) {
-                const count = doc.data().count;
+                let count = doc.data().count;
+
+                // Update the counter on the page
                 document.getElementById('counter').innerText = count;
 
                 // Increment the page view count in Firestore
-                pageviewsDoc.update({
+                await pageviewsDoc.update({
                     count: firebase.firestore.FieldValue.increment(1)
                 });
             } else {
@@ -61,11 +65,8 @@
                 pageviewsDoc.set({ count: 1 });
                 document.getElementById('counter').innerText = '1';
             }
-        });
+        })();
     </script>
-</body>
-</html>
-
 </body>
 </html>
 
