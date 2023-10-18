@@ -89,9 +89,10 @@
         <div id="input-container">
             <input type="text" id="username" placeholder="Username" />
             <input type="text" id="message-input" placeholder="Message" />
-            <input type="file" id="image-input" onchange="previewImage()" style="display:none;" />
-            <img id="image-preview" style="display:none; max-width:200px; margin-top:10px;" />
             <button onclick="sendMessage()">Send</button>
+            <input type="file" id="image-input" onchange="previewImage()" style="display:none;" />
+            <button onclick="selectImage()">Upload Image</button>
+            <img id="image-preview" style="display:none; max-width:200px; margin-top:10px;" />
         </div>
     </div>
 
@@ -118,6 +119,8 @@
         }
 
         const db = firebase.firestore();
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
 
         const pageviewsDoc = db.collection('metadata').doc('pageviews');
         const messagesDiv = document.getElementById('messages');
@@ -136,22 +139,9 @@
             console.error("Error fetching pageviews data:", error);
         });
 
-        function sendMessage() {
-            const username = usernameInput.value;
-            const messageText = messageInput.value;
-
-            if (username && messageText) {
-                db.collection('chat').add({
-                    username: username,
-                    message: messageText,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    // Scroll to the bottom after sending a message
-                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                });
-
-                messageInput.value = '';
-            }
+        function selectImage() {
+            const fileInput = document.getElementById('image-input');
+            fileInput.click();
         }
 
         function previewImage() {
@@ -160,23 +150,48 @@
             const file = fileInput.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = function(e) {
                     preview.src = e.target.result;
-                    preview.style.display = "block";
+                    preview.style.display = 'block';
                 }
                 reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
             }
+        }
+
+        async function sendMessage() {
+            const username = usernameInput.value;
+            const messageText = messageInput.value;
+            const imageFile = document.getElementById('image-input').files[0];
+
+            if (!username || !messageText && !imageFile) return;
+
+            let imageUrl;
+            if (imageFile) {
+                const imageRef = storageRef.child(`chat-images/${imageFile.name}`);
+                await imageRef.put(imageFile);
+                imageUrl = await imageRef.getDownloadURL();
+            }
+
+            db.collection('chat').add({
+                username: username,
+                message: messageText,
+                imageUrl: imageUrl,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                document.getElementById('image-input').value = '';  // Clear the file input
+                document.getElementById('image-preview').style.display = 'none';  // Hide the image preview
+                messageInput.value = '';  // Clear the message input
+            });
         }
 
         db.collection('chat').orderBy('timestamp', 'desc').limit(200).onSnapshot(snapshot => {
             let messages = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                let messageHtml = `<p><strong>${data.username}:</strong> ${data.message}</p>`;
-                if (data.imageUrl) {
-                    messageHtml += `<img src="${data.imageUrl}" style="max-width: 200px; margin-top: 10px;" />`;
-                }
-                messages.push(messageHtml);
+                messages.push(`<p><strong>${data.username}:</strong> ${data.message}</p>`);
             });
 
             // Display messages in ascending order
@@ -187,8 +202,8 @@
         });
     </script>
 </body>
-
 </html>
+
 
 
 
