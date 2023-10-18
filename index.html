@@ -78,6 +78,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 </head>
 
 <body>
@@ -88,6 +89,8 @@
         <div id="input-container">
             <input type="text" id="username" placeholder="Username" />
             <input type="text" id="message-input" placeholder="Message" />
+            <input type="file" id="image-input" onchange="previewImage()" style="display:none;" />
+            <img id="image-preview" style="display:none; max-width:200px; margin-top:10px;" />
             <button onclick="sendMessage()">Send</button>
         </div>
     </div>
@@ -151,11 +154,29 @@
             }
         }
 
+        function previewImage() {
+            const fileInput = document.getElementById('image-input');
+            const preview = document.getElementById('image-preview');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
         db.collection('chat').orderBy('timestamp', 'desc').limit(200).onSnapshot(snapshot => {
             let messages = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                messages.push(`<p><strong>${data.username}:</strong> ${data.message}</p>`);
+                let messageHtml = `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+                if (data.imageUrl) {
+                    messageHtml += `<img src="${data.imageUrl}" style="max-width: 200px; margin-top: 10px;" />`;
+                }
+                messages.push(messageHtml);
             });
 
             // Display messages in ascending order
@@ -166,7 +187,9 @@
         });
     </script>
 </body>
+
 </html>
+
 
 
 
