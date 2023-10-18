@@ -75,7 +75,7 @@
             margin: 10px 0;
         }
 
-        /* Styles for enlarged image */
+        /* New styles for enlarged image */
         #enlargedImageContainer {
             position: fixed;
             top: 0;
@@ -93,6 +93,7 @@
             max-width: 80%;
             max-height: 80%;
         }
+
     </style>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -102,7 +103,9 @@
 
 <body>
     <div id="chat-container">
-        <div id="messages"></div>
+        <div id="messages">
+            <!-- Chat messages will appear here -->
+        </div>
         <div id="input-container">
             <input type="text" id="username" placeholder="Username" />
             <input type="text" id="message-input" placeholder="Message" />
@@ -118,20 +121,20 @@
         <span id="counter">Loading...</span>
     </div>
 
-    <!-- Container for enlarged image -->
+    <!-- New container for enlarged image -->
     <div id="enlargedImageContainer" onclick="closeEnlargedImage()">
         <img id="enlargedImage" src="" alt="Enlarged Image">
     </div>
 
     <script>
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
+            apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
+            authDomain: "warwideweb-4ba1c.firebaseapp.com",
+            projectId: "warwideweb-4ba1c",
+            storageBucket: "warwideweb-4ba1c.appspot.com",
+            messagingSenderId: "886872248807",
+            appId: "1:886872248807:web:d686c92735731abf606d42",
+            measurementId: "G-CB4SR9VKSB"
         };
 
         try {
@@ -184,7 +187,7 @@
 
         async function sendMessage() {
             const username = usernameInput.value;
-            const messageText = messageInput.value.trim();
+            const messageText = messageInput.value;
             const imageFile = document.getElementById('image-input').files[0];
 
             if (!username || (!messageText && !imageFile)) return;
@@ -198,8 +201,8 @@
 
             db.collection('chat').add({
                 username: username,
-                message: messageText || null,
-                imageUrl: imageUrl || null,
+                message: messageText,
+                imageUrl: imageUrl,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 messageInput.value = '';
@@ -234,5 +237,4 @@
 </body>
 
 </html>
-
 
