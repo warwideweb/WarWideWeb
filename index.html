@@ -28,6 +28,8 @@
         <span id="counter">Loading...</span>
     </div>
     <script>
+        console.log("Script started.");
+
         const firebaseConfig = {
             apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
             authDomain: "warwideweb-4ba1c.firebaseapp.com",
@@ -38,8 +40,13 @@
             measurementId: "G-CB4SR9VKSB"
         };
 
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
+        try {
+            const app = firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized.");
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
+        }
+
         const db = firebase.firestore();
 
         const pageviewsDoc = db.collection('metadata').doc('pageviews');
@@ -58,6 +65,9 @@
 
     </script>
 </body>
+
+</html>
+
 
 </html>
 
