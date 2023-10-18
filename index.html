@@ -75,25 +75,6 @@
             margin: 10px 0;
         }
 
-        /* New styles for enlarged image */
-        #enlargedImageContainer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        #enlargedImageContainer img {
-            max-width: 80%;
-            max-height: 80%;
-        }
-
     </style>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -119,11 +100,6 @@
     <div style="text-align: center; margin-top: 20px;">
         You are visitor number:
         <span id="counter">Loading...</span>
-    </div>
-
-    <!-- New container for enlarged image -->
-    <div id="enlargedImageContainer" onclick="closeEnlargedImage()">
-        <img id="enlargedImage" src="" alt="Enlarged Image">
     </div>
 
     <script>
@@ -238,27 +214,11 @@
                 const imageElem = document.createElement('img');
                 imageElem.src = data.imageUrl;
                 imageElem.style.maxWidth = '100%';
-                imageElem.onclick = function() {
-                    showEnlargedImage(data.imageUrl);
-                };
                 imageDiv.appendChild(imageElem);
                 messageDiv.appendChild(imageDiv);
             }
 
             return messageDiv;
-        }
-
-        function showEnlargedImage(src) {
-            const enlargedImg = document.getElementById('enlargedImage');
-            const enlargedContainer = document.getElementById('enlargedImageContainer');
-
-            enlargedImg.src = src;
-            enlargedContainer.style.display = 'flex';
-        }
-
-        function closeEnlargedImage() {
-            const enlargedContainer = document.getElementById('enlargedImageContainer');
-            enlargedContainer.style.display = 'none';
         }
 
         db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
@@ -274,5 +234,6 @@
 </body>
 
 </html>
+
 
 
