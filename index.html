@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Counter</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        You are visitor number: 
+        <span id="counter">...</span>
+    </div>
+    <script>
+        // This is a very basic counter. It won't work across multiple users/sessions.
+        if (!localStorage.getItem('counter')) {
+            localStorage.setItem('counter', 1);
+        } else {
+            let count = parseInt(localStorage.getItem('counter'), 10);
+            count++;
+            localStorage.setItem('counter', count);
+        }
+        document.getElementById('counter').innerText = localStorage.getItem('counter');
+    </script>
+</body>
+</html>
