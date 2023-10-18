@@ -4,29 +4,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Counter</title>
+    <title>Page Counter and Chat Room</title>
     <style>
         body {
             background-color: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
             font-family: Arial, sans-serif;
             font-size: 24px;
+            color: white;
+            padding: 20px;
+        }
+        
+        #chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid white;
+            padding: 20px;
+        }
+        
+        #messages {
+            max-height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 20px;
         }
     </style>
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 
 <body>
-    <div>
+    <div id="chat-container">
+        <div id="messages">
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <div id="input-container">
+            <input type="text" id="username" placeholder="Enter your username" />
+            <input type="text" id="message-input" placeholder="Enter your message" />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
         You are visitor number:
         <span id="counter">Loading...</span>
     </div>
+
     <script>
         console.log("Script started.");
 
@@ -49,6 +72,7 @@
 
         const db = firebase.firestore();
 
+        // Page counter logic
         const pageviewsDoc = db.collection('metadata').doc('pageviews');
 
         pageviewsDoc.get().then(doc => {
@@ -63,8 +87,39 @@
             console.error("Error fetching pageviews data:", error);
         });
 
+        // Chat room logic
+        const messagesDiv = document.getElementById('messages');
+        const usernameInput = document.getElementById('username');
+        const messageInput = document.getElementById('message-input');
+
+        function sendMessage() {
+            const username = usernameInput.value;
+            const messageText = messageInput.value;
+
+            if (username && messageText) {
+                db.collection('chat').add({
+                    username: username,
+                    message: messageText,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                messageInput.value = '';
+            }
+        }
+
+        db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
+            messagesDiv.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                messagesDiv.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+            });
+        });
     </script>
 </body>
+
+</html>
+
 
 </html>
 
