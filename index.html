@@ -74,6 +74,26 @@
         p {
             margin: 10px 0;
         }
+
+        /* New styles for enlarged image */
+        #enlargedImageContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #enlargedImageContainer img {
+            max-width: 80%;
+            max-height: 80%;
+        }
+
     </style>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -99,6 +119,11 @@
     <div style="text-align: center; margin-top: 20px;">
         You are visitor number:
         <span id="counter">Loading...</span>
+    </div>
+
+    <!-- New container for enlarged image -->
+    <div id="enlargedImageContainer" onclick="closeEnlargedImage()">
+        <img id="enlargedImage" src="" alt="Enlarged Image">
     </div>
 
     <script>
@@ -161,49 +186,55 @@
         }
 
         async function sendMessage() {
-        const username = usernameInput.value.trim();
-        const messageText = messageInput.value.trim();
-        const imageFile = document.getElementById('image-input').files[0];
+            const username = usernameInput.value;
+            const messageText = messageInput.value;
+            const imageFile = document.getElementById('image-input').files[0];
 
-        if (!username || (!messageText && !imageFile)) return;
+            if (!username || (!messageText && !imageFile)) return;
 
-        let imageUrl;
-        if (imageFile) {
-            const imageRef = storageRef.child(`chat-images/${imageFile.name}`);
-            await imageRef.put(imageFile);
-            imageUrl = await imageRef.getDownloadURL();
+            let imageUrl;
+            if (imageFile) {
+                const imageRef = storageRef.child(`chat-images/${imageFile.name}`);
+                await imageRef.put(imageFile);
+                imageUrl = await imageRef.getDownloadURL();
+            }
+
+            db.collection('chat').add({
+                username: username,
+                message: messageText,
+                imageUrl: imageUrl,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                messageInput.value = '';
+                document.getElementById('image-preview').style.display = 'none';
+                document.getElementById('image-input').value = '';
+            });
         }
 
-             db.collection('chat').add({
-            username: username,
-            message: messageText || null,  // Set to null if empty
-            imageUrl: imageUrl || null,    // Set to null if empty
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
+        db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
+            messagesDiv.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                let content = `<p><b>${data.username}</b>: ${data.message || ''}`;
+                if (data.imageUrl) {
+                    content += `<br><img src="${data.imageUrl}" style="max-width:200px; cursor: pointer;" onclick="enlargeImage('${data.imageUrl}')">`;
+                }
+                content += `</p>`;
+                messagesDiv.innerHTML += content;
+            });
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-            document.getElementById('image-input').value = '';  // Clear the file input
-            document.getElementById('image-preview').style.display = 'none';  // Hide the image preview
-            messageInput.value = '';  // Clear the message input
-        });
-    }
-
-    db.collection('chat').orderBy('timestamp', 'desc').limit(200).onSnapshot(snapshot => {
-        let messages = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            let messageContent = `<strong>${data.username}:</strong> ${data.message || ''}`;
-            if (data.imageUrl) {
-                messageContent += ` <img src="${data.imageUrl}" alt="Uploaded image" style="max-width: 200px; display: block; margin-top: 10px;">`;
-            }
-            messages.push(`<p>${messageContent}</p>`);
         });
 
-        // Display messages
-        messagesDiv.innerHTML = messages.join('');
+        function enlargeImage(url) {
+            document.getElementById('enlargedImage').src = url;
+            document.getElementById('enlargedImageContainer').style.display = 'flex';
+        }
 
-        // Scroll to the bottom
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-</script>
+        function closeEnlargedImage() {
+            document.getElementById('enlargedImageContainer').style.display = 'none';
+        }
+    </script>
 </body>
+
 </html>
+
