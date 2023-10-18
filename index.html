@@ -150,21 +150,20 @@
             appId: "1:886872248807:web:d686c92735731abf606d42",
             measurementId: "G-CB4SR9VKSB"
         };
+try {
+    firebase.initializeApp(firebaseConfig);
+} catch (error) {
+    console.error("Firebase initialization failed:", error);
+}
 
-        try {
-            firebase.initializeApp(firebaseConfig);
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-        }
+const db = firebase.firestore();
+const storage = firebase.storage();
+const storageRef = storage.ref();
 
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-        const storageRef = storage.ref();
-
-        const pageviewsDoc = db.collection('metadata').doc('pageviews');
-        const messagesDiv = document.getElementById('messages');
-        const usernameInput = document.getElementById('username');
-        const messageInput = document.getElementById('message-input');
+const pageviewsDoc = db.collection('metadata').doc('pageviews');
+const messagesDiv = document.getElementById('messages');
+const usernameInput = document.getElementById('username');
+const messageInput = document.getElementById('message-input');
 
         pageviewsDoc.get().then(doc => {
             if (doc.exists) {
@@ -187,10 +186,12 @@
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message';
 
-                const usernameElem = document.createElement('div');
-                usernameElem.className = 'username';
-                usernameElem.textContent = data.username + ':';
-                messageDiv.appendChild(usernameElem);
+               const usernameElem = document.createElement('div');
+usernameElem.className = 'username';
+usernameElem.textContent = data.username + ':';
+usernameElem.style.color = getUsernameColor(data.username);  // Apply color based on username
+messageDiv.appendChild(usernameElem);
+
 
                 if (data.message) {
                     const textElem = document.createElement('div');
