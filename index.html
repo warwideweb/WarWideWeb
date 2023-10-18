@@ -44,12 +44,18 @@
         const db = firebase.firestore();
 
         async function updateAndViewCount() {
-            const pageviewsDoc = db.collection('metadata').doc('pageviews');
-            const doc = await pageviewsDoc.get();
+           // After Firebase Initialization
+const pageviewsDoc = db.collection('metadata').doc('pageviews');
 
-            if (doc.exists) {
-                const currentCount = doc.data().count;
-                document.getElementById('counter').textContent = currentCount;
+pageviewsDoc.get().then(doc => {
+    if (doc.exists) {
+        console.log("Pageviews data from Firestore:", doc.data());
+    } else {
+        console.error("No pageviews data found!");
+    }
+}).catch(error => {
+    console.error("Error fetching pageviews data:", error);
+});
 
                 // Now incrementing the counter in Firestore
                 await pageviewsDoc.update({ count: currentCount + 1 });
