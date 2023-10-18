@@ -142,23 +142,32 @@
                     username: username,
                     message: messageText,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    // Scroll to the bottom after sending a message
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
                 });
 
                 messageInput.value = '';
             }
         }
 
-        db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
-            messagesDiv.innerHTML = '';
-
+        db.collection('chat').orderBy('timestamp', 'desc').limit(200).onSnapshot(snapshot => {
+            let messages = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                messagesDiv.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+                messages.push(`<p><strong>${data.username}:</strong> ${data.message}</p>`);
             });
+
+            // Display messages in ascending order
+            messagesDiv.innerHTML = messages.reverse().join('');
+
+            // Scroll to the bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
     </script>
 </body>
 </html>
+
 
 
 
