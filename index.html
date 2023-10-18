@@ -74,7 +74,6 @@
         p {
             margin: 10px 0;
         }
-
     </style>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -86,7 +85,6 @@
         <div id="messages">
             <!-- Chat messages will appear here -->
         </div>
-
         <div id="input-container">
             <input type="text" id="username" placeholder="Username" />
             <input type="text" id="message-input" placeholder="Message" />
@@ -100,23 +98,28 @@
     </div>
 
     <script>
-        console.log("Script started.");
-
         const firebaseConfig = {
-            // ... [your firebase config here]
+            apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
+            authDomain: "warwideweb-4ba1c.firebaseapp.com",
+            projectId: "warwideweb-4ba1c",
+            storageBucket: "warwideweb-4ba1c.appspot.com",
+            messagingSenderId: "886872248807",
+            appId: "1:886872248807:web:d686c92735731abf606d42",
+            measurementId: "G-CB4SR9VKSB"
         };
 
         try {
-            const app = firebase.initializeApp(firebaseConfig);
-            console.log("Firebase initialized.");
+            firebase.initializeApp(firebaseConfig);
         } catch (error) {
             console.error("Firebase initialization failed:", error);
         }
 
         const db = firebase.firestore();
 
-        // Page counter logic
         const pageviewsDoc = db.collection('metadata').doc('pageviews');
+        const messagesDiv = document.getElementById('messages');
+        const usernameInput = document.getElementById('username');
+        const messageInput = document.getElementById('message-input');
 
         pageviewsDoc.get().then(doc => {
             if (doc.exists) {
@@ -129,11 +132,6 @@
         }).catch(error => {
             console.error("Error fetching pageviews data:", error);
         });
-
-        // Chat room logic
-        const messagesDiv = document.getElementById('messages');
-        const usernameInput = document.getElementById('username');
-        const messageInput = document.getElementById('message-input');
 
         function sendMessage() {
             const username = usernameInput.value;
@@ -152,16 +150,16 @@
 
         db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
             messagesDiv.innerHTML = '';
+
             snapshot.forEach(doc => {
                 const data = doc.data();
                 messagesDiv.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
             });
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
     </script>
 </body>
-
 </html>
+
 
 
 
