@@ -97,7 +97,6 @@
         <div id="image-container">
             <img id="rating-image" src="" alt="Rate this image">
             <div id="rate-buttons">
-                <!-- Rating buttons -->
                 <button onclick="rateImage(1)">1</button>
                 <button onclick="rateImage(2)">2</button>
                 <button onclick="rateImage(3)">3</button>
@@ -112,7 +111,6 @@
         </div>
         <div id="top-images">
             <h2>Top Rated Images</h2>
-            <!-- Top rated images will be populated here -->
         </div>
     </div>
 
@@ -122,7 +120,7 @@
     </div>
 
     <script>
-       const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
             authDomain: "warwideweb-4ba1c.firebaseapp.com",
             projectId: "warwideweb-4ba1c",
@@ -139,39 +137,75 @@
         const storageRef = storage.ref();
         let currentImageId = null;
 
-        // Retrieve an image to rate
         function getNextImage() {
-            // Your logic to get the next unrated image for the user
+            db.collection("uploadedImages").limit(1).get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    currentImageId = doc.id;
+                    const imageUrl = doc.data().imageUrl;
+                    document.getElementById('rating-image').src = imageUrl;
+                });
+            });
         }
 
         function rateImage(rating) {
             if (!currentImageId) return;
 
-            // Your logic to rate the image, e.g., update Firestore with the new rating
+            const docRef = db.collection("uploadedImages").doc(currentImageId);
+            docRef.get().then((doc) => {
+                if (doc.exists) {
+                    let currentRatings = doc.data().ratings;
+                    currentRatings.push(rating);
+                    const avgRating = currentRatings.reduce((a, b) => a + b, 0) / currentRatings.length;
+
+                    docRef.update({
+                        ratings: currentRatings,
+                        averageRating: avgRating
+                    });
+                }
+            });
+        }
+
+        function getTopRatedImages() {
+            db.collection("uploadedImages").orderBy("averageRating", "desc").limit(5).get().then((querySnapshot) => {
+                const topImagesDiv = document.getElementById('top-images');
+                querySnapshot.forEach((doc) => {
+                    const imageUrl = doc.data().imageUrl;
+                    const imgElement = document.createElement('img');
+                    imgElement.src = imageUrl;
+                    imgElement.style.width = '100%';
+                    topImagesDiv.appendChild(imgElement);
+                });
+            });
         }
 
         function uploadImage() {
             const file = document.getElementById('upload-input').files[0];
-
             if (!file) return;
 
             const imageRef = storageRef.child(`images/${file.name}`);
             imageRef.put(file).then(snapshot => {
                 imageRef.getDownloadURL().then(url => {
-                    // Save the URL to Firestore along with initial rating data
+                    db.collection("uploadedImages").add({
+                        imageUrl: url,
+                        ratings: [],
+                        averageRating: 0
+                    }).then(() => {
+                        getNextImage();
+                    });
                 });
             });
         }
 
-        // Populate top rated images
-        function getTopRatedImages() {
-            // Your logic to get the top-rated images, e.g., from Firestore
+        window.onload = function () {
+            getNextImage();
+            getTopRatedImages();
         }
 
-        // Initialize
-        getNextImage();
-        getTopRatedImages();
     </script>
+</body>
+
+</html>
+
 </body>
 
 </html>
