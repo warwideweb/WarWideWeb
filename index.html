@@ -85,6 +85,7 @@
             }
         }
     </style>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
@@ -110,6 +111,7 @@
         </div>
         <div id="top-images">
             <h2>Top Rated Images</h2>
+            <ol id="top-images-list"></ol>
         </div>
     </div>
 
@@ -120,79 +122,77 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyA227m5G52cRK75-cSb68QvCwT7lvvLdO4",
+            authDomain: "warwideweb-4ba1c.firebaseapp.com",
+            projectId: "warwideweb-4ba1c",
+            storageBucket: "warwideweb-4ba1c.appspot.com",
+            messagingSenderId: "886872248807",
+            appId: "1:886872248807:web:d686c92735731abf606d42",
+            measurementId: "G-CB4SR9VKSB"
         };
 
         firebase.initializeApp(firebaseConfig);
+
         const db = firebase.firestore();
         const storage = firebase.storage();
         const storageRef = storage.ref();
         let currentImageId = null;
-        let currentImageIndex = 0;
-        let allImages = [];
 
         function getNextImage() {
-            if (currentImageIndex < allImages.length) {
-                const doc = allImages[currentImageIndex];
-                currentImageId = doc.id;
-                const imageUrl = doc.data().imageUrl;
-                document.getElementById('rating-image').src = imageUrl;
-                currentImageIndex++;
-            } else {
-                document.getElementById('rating-image').src = "";
-                document.getElementById('image-container').innerHTML = "No more photos to rate";
-            }
-        }
-
-        function fetchAllImages() {
-            db.collection("uploadedImages").get().then((querySnapshot) => {
-                allImages = [];
-                querySnapshot.forEach((doc) => {
-                    allImages.push(doc);
-                });
-                getNextImage();
+            db.collection("uploadedImages").limit(1).get().then((querySnapshot) => {
+                if (!querySnapshot.empty) {
+                    querySnapshot.forEach((doc) => {
+                        currentImageId = doc.id;
+                        const imageUrl = doc.data().imageUrl;
+                        document.getElementById('rating-image').src = imageUrl;
+                    });
+                } else {
+                    document.getElementById('rating-image').src = '';
+                    alert('No more photos to rate.');
+                }
             });
         }
 
         function rateImage(rating) {
             if (!currentImageId) return;
+
             const docRef = db.collection("uploadedImages").doc(currentImageId);
             docRef.get().then((doc) => {
                 if (doc.exists) {
                     let currentRatings = doc.data().ratings;
                     currentRatings.push(rating);
                     const avgRating = currentRatings.reduce((a, b) => a + b, 0) / currentRatings.length;
+
                     docRef.update({
                         ratings: currentRatings,
                         averageRating: avgRating
                     }).then(() => {
                         getNextImage();
-                        fetchTopRatedImages();
                     });
                 }
             });
         }
 
-        function fetchTopRatedImages() {
+        function getTopRatedImages() {
+            const topImagesList = document.getElementById('top-images-list');
+            topImagesList.innerHTML = '';
+
             db.collection("uploadedImages").orderBy("averageRating", "desc").limit(5).get().then((querySnapshot) => {
-                const topImagesDiv = document.getElementById('top-images');
-                topImagesDiv.innerHTML = "<h2>Top Rated Images</h2>"; // Clear previous images
-                let rank = 1;
                 querySnapshot.forEach((doc) => {
                     const imageUrl = doc.data().imageUrl;
+                    const avgRating = doc.data().averageRating.toFixed(2);
+                    
+                    const listItem = document.createElement('li');
                     const imgElement = document.createElement('img');
                     imgElement.src = imageUrl;
                     imgElement.style.width = '100%';
-                    const rankElement = document.createElement('span');
-                    rankElement.innerHTML = rank + ". ";
-                    topImagesDiv.appendChild(rankElement);
-                    topImagesDiv.appendChild(imgElement);
-                    rank++;
+
+                    const ratingSpan = document.createElement('span');
+                    ratingSpan.textContent = " Rating: " + avgRating;
+
+                    listItem.appendChild(imgElement);
+                    listItem.appendChild(ratingSpan);
+                    topImagesList.appendChild(listItem);
                 });
             });
         }
@@ -200,6 +200,7 @@
         function uploadImage() {
             const file = document.getElementById('upload-input').files[0];
             if (!file) return;
+
             const imageRef = storageRef.child(`images/${file.name}`);
             imageRef.put(file).then(snapshot => {
                 imageRef.getDownloadURL().then(url => {
@@ -208,18 +209,23 @@
                         ratings: [],
                         averageRating: 0
                     }).then(() => {
-                        fetchAllImages();
+                        getNextImage();
+                        getTopRatedImages();
                     });
                 });
             });
         }
 
-        window.onload = () => {
-            fetchAllImages();
-            fetchTopRatedImages();
-        };
+        window.onload = function () {
+            getNextImage();
+            getTopRatedImages();
+        }
+
     </script>
 </body>
+
+</html>
+
 
 </html>
 
