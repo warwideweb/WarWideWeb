@@ -6,29 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Counter and Chat Room</title>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             background-color: #1e1e1e;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #eaeaea;
             padding: 20px;
-            margin: 0;
         }
 
         #chat-container {
             max-width: 600px;
             width: 100%;
+            height: calc(100% - 40px); /* body padding top and bottom subtracted */
             margin: 20px auto;
             border: 1px solid #eaeaea;
             padding: 20px;
             background-color: #2c2c2c;
             border-radius: 8px;
             box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
         }
 
         #messages {
-            max-height: 300px;
+            flex-grow: 1;
+            max-height: calc(100% - 70px); /* space for input and some margin */
             overflow-y: scroll;
-            overflow-x: hidden; /* Prevent horizontal scrolling */
+            overflow-x: hidden; 
             margin-bottom: 20px;
             padding: 10px;
             border-bottom: 1px solid #eaeaea;
@@ -152,7 +161,6 @@
     <div id="enlargedImageContainer" onclick="closeEnlargedImage()">
         <img id="enlargedImage" src="" alt="Enlarged Image">
     </div>
-    </div>
 
     <script>
         const firebaseConfig = {
@@ -164,98 +172,102 @@
             appId: "1:886872248807:web:d686c92735731abf606d42",
             measurementId: "G-CB4SR9VKSB"
         };
-try {
-        firebase.initializeApp(firebaseConfig);
-    } catch (error) {
-        console.error("Firebase initialization failed:", error);
-    }
-
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const storageRef = storage.ref();
-
-    const pageviewsDoc = db.collection('metadata').doc('pageviews');
-    const messagesDiv = document.getElementById('messages');
-    const usernameInput = document.getElementById('username');
-    const messageInput = document.getElementById('message-input');
-
-    function getUsernameColor(username) {
-        let hash = 0;
-        for (let i = 0; i < username.length; i++) {
-            hash = (hash << 5) - hash + username.charCodeAt(i);
-            hash |= 0; // Convert to a 32-bit integer
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
         }
-        const color = (hash & 0x00FFFFFF)
-            .toString(16)
-            .toUpperCase();
-        return '#' + '00000'.substring(0, 6 - color.length) + color;
-    }
 
-    pageviewsDoc.get().then(doc => {
-            if (doc.exists) {
-                let currentCount = doc.data().count;
-                document.getElementById('counter').textContent = currentCount;
-                pageviewsDoc.update({ count: currentCount + 1 });
-            } else {
-                console.error("No pageviews data found!");
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+
+        const pageviewsDoc = db.collection('metadata').doc('pageviews');
+        const messagesDiv = document.getElementById('messages');
+        const usernameInput = document.getElementById('username');
+        const messageInput = document.getElementById('message-input');
+
+        function getUsernameColor(username) {
+            let hash = 0;
+            for (let i = 0; i < username.length; i++) {
+                hash = (hash << 5) - hash + username.charCodeAt(i);
+                hash |= 0; // Convert to a 32-bit integer
             }
-        }).catch(error => {
-            console.error("Error getting pageviews:", error);
-        });
+            const color = (hash & 0x00FFFFFF)
+                .toString(16)
+                .toUpperCase();
+            return '#' + '00000'.substring(0, 6 - color.length) + color;
+        }
 
-        db.collection('chat').orderBy('timestamp').onSnapshot(snapshot => {
-            messagesDiv.innerHTML = '';  // Clear the previous messages
-
-            snapshot.docs.forEach(doc => {
-                const data = doc.data();
-
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message';
-
-               const usernameElem = document.createElement('div');
-usernameElem.className = 'username';
-usernameElem.textContent = data.username + ':';
-usernameElem.style.color = getUsernameColor(data.username);  // Apply color based on username
-messageDiv.appendChild(usernameElem);
-
-
-                if (data.message) {
-                    const textElem = document.createElement('div');
-                    textElem.className = 'text';
-                    textElem.textContent = data.message;
-                    messageDiv.appendChild(textElem);
+        pageviewsDoc.get().then(doc => {
+                if (doc.exists) {
+                    let currentCount = doc.data().count;
+                    document.getElementById('counter').textContent = currentCount;
+                    pageviewsDoc.update({ count: currentCount + 1 });
+                } else {
+                    console.error("No pageviews document found!");
                 }
-
-                if (data.imageUrl) {
-                    const imageElem = document.createElement('img');
-                    imageElem.src = data.imageUrl;
-                    imageElem.className = 'chat-image';
-                    imageElem.onclick = function() {
-                        enlargeImage(data.imageUrl);
-                    };
-                    messageDiv.appendChild(imageElem);
-                }
-
-                messagesDiv.appendChild(messageDiv);
+            }).catch(error => {
+                console.error("Error getting pageviews:", error);
             });
 
-            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to the latest message
-        });
+        db.collection('messages').orderBy('timestamp', 'asc').onSnapshot(snapshot => {
+                messagesDiv.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const messageData = doc.data();
+                    const messageElement = document.createElement('div');
+                    messageElement.classList.add('message');
 
-        function previewImage() {
-            const imageFile = document.getElementById('image-input').files[0];
-            const preview = document.getElementById('image-preview');
-            const reader = new FileReader();
+                    if (messageData.image) {
+                        const img = document.createElement('img');
+                        img.src = messageData.image;
+                        img.classList.add('chat-image');
+                        img.onclick = function() { enlargeImage(img.src); };
+                        messageElement.appendChild(img);
+                    }
 
-            reader.onloadend = function() {
-                preview.src = reader.result;
-                preview.style.display = 'block';
-            }
+                    const usernameElement = document.createElement('span');
+                    usernameElement.style.color = getUsernameColor(messageData.username);
+                    usernameElement.textContent = messageData.username + ':';
+                    usernameElement.classList.add('username');
+                    messageElement.appendChild(usernameElement);
 
-            if (imageFile) {
-                reader.readAsDataURL(imageFile);
-            } else {
-                preview.style.display = 'none';
+                    const textElement = document.createElement('span');
+                    textElement.textContent = ' ' + messageData.text;
+                    textElement.classList.add('text');
+                    messageElement.appendChild(textElement);
+
+                    messagesDiv.appendChild(messageElement);
+                });
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+
+        function sendMessage() {
+            const text = messageInput.value;
+            const username = usernameInput.value;
+
+            if (text && username) {
+                const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+                const newMessage = {
+                    text: text,
+                    username: username,
+                    timestamp: timestamp
+                };
+
+                // If we have an image URL from previous steps, attach it to the message
+                if (window.uploadedImageURL) {
+                    newMessage.image = window.uploadedImageURL;
+                }
+
+                db.collection('messages').add(newMessage).then(() => {
+                    // Clear the input field and the uploaded image URL
+                    messageInput.value = '';
+                    window.uploadedImageURL = undefined;
+                    document.getElementById('image-preview').style.display = 'none';
+                }).catch(error => {
+                    console.error("Error sending message:", error);
+                });
             }
         }
 
@@ -263,58 +275,43 @@ messageDiv.appendChild(usernameElem);
             document.getElementById('image-input').click();
         }
 
-        async function sendMessage() {
-            const username = usernameInput.value.trim();
-            const messageText = messageInput.value.trim();
-            const imageFile = document.getElementById('image-input').files[0];
+        function previewImage() {
+            const fileInput = document.getElementById('image-input');
+            const file = fileInput.files[0];
 
-            if (!username || (!messageText && !imageFile)) return;
+            if (file) {
+                const reader = new FileReader();
 
-            const chatData = {
-                username: username,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
+                reader.onload = function(e) {
+                    const preview = document.getElementById('image-preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
 
-            if (messageText) chatData.message = messageText;
+                    const imageRef = storageRef.child('images/' + file.name);
+                    imageRef.put(file).then(snapshot => {
+                        imageRef.getDownloadURL().then(url => {
+                            window.uploadedImageURL = url;
+                        });
+                    });
+                }
 
-            if (imageFile) {
-                const imageRef = storageRef.child(`chat-images/${imageFile.name}`);
-                await imageRef.put(imageFile);
-                chatData.imageUrl = await imageRef.getDownloadURL();
+                reader.readAsDataURL(file);
             }
-
-            db.collection('chat').add(chatData).then(() => {
-                messageInput.value = '';
-                document.getElementById('image-preview').style.display = 'none';
-                document.getElementById('image-input').value = '';
-            }).catch(error => {
-                console.error("Error sending message:", error);
-            });
         }
 
-        function enlargeImage(url) {
-            const enlargedImg = document.getElementById('enlargedImage');
-            enlargedImg.src = url;
-            document.getElementById('enlargedImageContainer').style.display = 'flex';
+        function enlargeImage(src) {
+            const container = document.getElementById('enlargedImageContainer');
+            const img = document.getElementById('enlargedImage');
+            img.src = src;
+            container.style.display = 'flex';
         }
 
         function closeEnlargedImage() {
-            document.getElementById('enlargedImageContainer').style.display = 'none';
+            const container = document.getElementById('enlargedImageContainer');
+            container.style.display = 'none';
         }
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        });
     </script>
 </body>
-
-</html>
-
-
-</html>
 
 </html>
 
