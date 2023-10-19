@@ -1,18 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ad Page with Counter</title>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-
-    <!-- Stripe.js -->
-    <script src="https://js.stripe.com/v3/"></script>
-
+    <title>Image Rating</title>
     <style>
         body {
             background-color: #1e1e1e;
@@ -21,70 +13,165 @@
             padding: 20px;
             margin: 0;
         }
-        /* Add any additional styles you might need here. */
+
+        #main-content {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        #image-container, #top-images {
+            width: 50%;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            background-color: #2c2c2c;
+            border-radius: 8px;
+        }
+
+        #image-container img {
+            max-width: 100%;
+        }
+
+        #rate-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #top-images h2 {
+            text-align: center;
+        }
+
+        #top-images img {
+            max-width: 80px;
+            display: block;
+            margin: 10px auto;
+        }
+
+        #upload-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        #upload-container button {
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            #main-content {
+                flex-direction: column;
+            }
+
+            #image-container, #top-images {
+                width: 100%;
+            }
+        }
     </style>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 </head>
+
 <body>
-    <div style="text-align: center; margin-top: 20px;">
-        You are visitor number: <span id="counter">Loading...</span>
+    <div id="main-content">
+        <div id="image-container">
+            <img id="rating-image" src="" alt="Rate this image">
+            <div id="rate-buttons">
+                <!-- Rating buttons -->
+                <button onclick="rateImage(1)">1</button>
+                <button onclick="rateImage(2)">2</button>
+                <button onclick="rateImage(3)">3</button>
+                <button onclick="rateImage(4)">4</button>
+                <button onclick="rateImage(5)">5</button>
+                <button onclick="rateImage(6)">6</button>
+                <button onclick="rateImage(7)">7</button>
+                <button onclick="rateImage(8)">8</button>
+                <button onclick="rateImage(9)">9</button>
+                <button onclick="rateImage(10)">10</button>
+            </div>
+        </div>
+        <div id="top-images">
+            <h2>Top Rated Images</h2>
+            <!-- Top rated images will be populated here -->
+        </div>
     </div>
 
-    <!-- Ad space -->
-    <div style="text-align: center; margin-top: 20px;">
-        <img id="adSpace" src="default-ad.jpg" alt="Advertisement" style="max-width: 500px;">
-    </div>
-
-    <!-- Stripe integration and image upload comes here -->
-    <div style="text-align: center; margin-top: 20px;">
-        <button id="buyButton">Buy for $<span id="adPrice">1</span></button>
-        <input type="file" id="imageUpload" style="display:none;">
+    <div id="upload-container">
+        <input type="file" id="upload-input" onchange="uploadImage()" style="display:none;">
+        <button onclick="document.getElementById('upload-input').click()">Upload Image</button>
     </div>
 
     <script>
         const firebaseConfig = {
-            /* Your Firebase Configuration */
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
-        try {
-            firebase.initializeApp(firebaseConfig);
-        } catch (error) {
-            console.error("Firebase initialization failed:", error);
-        }
+        firebase.initializeApp(firebaseConfig);
 
         const db = firebase.firestore();
-        const pageviewsDoc = db.collection('metadata').doc('pageviews');
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+        let currentImageId = null;
 
-        pageviewsDoc.get().then(doc => {
-            if (doc.exists) {
-                let currentCount = doc.data().count;
-                document.getElementById('counter').textContent = currentCount;
-                pageviewsDoc.update({ count: currentCount + 1 });
-            } else {
-                console.error("No pageviews data found!");
-            }
-        }).catch(error => {
-            console.error("Error getting pageviews:", error);
-        });
-
-        const stripe = Stripe('YOUR_STRIPE_PUBLIC_KEY');  // Replace with your Stripe Public Key
-        let currentPrice = 1;  // Start with $1
-
-        document.getElementById('buyButton').addEventListener('click', () => {
-            // This is just a basic setup; you'll want to get a session ID from your server.
-            stripe.redirectToCheckout({
-                sessionId: 'sample_session_id'
-            }).then((result) => {
-                console.error(result.error.message);
-            });
-        });
-
-        function updateAd() {
-            currentPrice += 1;
-            document.getElementById('adPrice').textContent = currentPrice;
-            const file = document.getElementById('imageUpload').files[0];
-            // Add logic to upload the image to Firebase storage and update the adSpace src.
-            // Also, consider updating Firestore with the new price.
+        // Retrieve an image to rate
+        function getNextImage() {
+            // Your logic to get the next unrated image for the user
         }
+
+        function rateImage(rating) {
+            if (!currentImageId) return;
+
+            // Your logic to rate the image, e.g., update Firestore with the new rating
+        }
+
+        function uploadImage() {
+            const file = document.getElementById('upload-input').files[0];
+
+            if (!file) return;
+
+            const imageRef = storageRef.child(`images/${file.name}`);
+            imageRef.put(file).then(snapshot => {
+                imageRef.getDownloadURL().then(url => {
+                    // Save the URL to Firestore along with initial rating data
+                });
+            });
+        }
+
+        // Populate top rated images
+        function getTopRatedImages() {
+            // Your logic to get the top-rated images, e.g., from Firestore
+        }
+
+        // Initialize
+        getNextImage();
+        getTopRatedImages();
     </script>
 </body>
+
 </html>
+
