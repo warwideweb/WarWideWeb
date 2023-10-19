@@ -154,22 +154,30 @@
         }
 
         function rateImage(rating) {
-            if (!currentImageId) return;
+    if (!currentImageId) return;
 
-            const docRef = db.collection("uploadedImages").doc(currentImageId);
-            docRef.get().then((doc) => {
-                if (doc.exists) {
-                    let currentRatings = doc.data().ratings;
-                    currentRatings.push(rating);
-                    const avgRating = currentRatings.reduce((a, b) => a + b, 0) / currentRatings.length;
+    const docRef = db.collection("uploadedImages").doc(currentImageId);
+    docRef.get().then((doc) => {
+        if (doc.exists) {
+            let currentRatings = doc.data().ratings;
+            currentRatings.push(rating);
+            const avgRating = currentRatings.reduce((a, b) => a + b, 0) / currentRatings.length;
 
-                    docRef.update({
-                        ratings: currentRatings,
-                        averageRating: avgRating
-                    }).then(() => {
-                        getNextImage();
-                    });
-                }
+            docRef.update({
+                ratings: currentRatings,
+                averageRating: avgRating
+            }).then(() => {
+                getNextImage();
+                getTopRatedImages(); // Update top-rated images
+            }).catch((error) => {
+                console.error("Error updating document: ", error);
+            });
+        }
+    }).catch((error) => {
+        console.error("Error getting document:", error);
+    });
+}
+
             });
         }
 
