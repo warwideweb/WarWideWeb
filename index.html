@@ -18,35 +18,54 @@
         }
 
         #container {
-            font-size: 5em;
+            font-size: 5em; /* Large text size for 'FEED THE BEAST' */
             font-weight: bold;
             text-transform: uppercase;
             margin: 0;
             cursor: pointer;
             transition: all 0.3s ease-in-out;
+            position: relative;
         }
 
-        #container:hover::after {
-            content: "0xC7D1E61fEF0F18B4dc2E13eff4CBe2B97200B09F";
-            font-size: 0.2em; /* Adjust this for the size of the revealed text */
-            display: block;
-            margin-top: 20px; /* Adjust this for space between the texts */
+        #hiddenText {
+            display: none;
+            font-size: 0.2em; /* Smaller text size for the hidden text */
+            font-weight: normal; /* Regular font weight for the hidden text */
             text-transform: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
-        #container:hover {
-            content: "";
+        #container:hover #defaultText {
+            display: none;
+        }
+
+        #container:hover #hiddenText {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            #container {
+                font-size: 2.5em; /* Smaller size for mobile devices */
+            }
+            #hiddenText {
+                font-size: 0.5em; /* Adjust hidden text size for mobile */
+            }
         }
     </style>
 </head>
 
 <body>
     <div id="container">
-        Feed the Beast
+        <span id="defaultText">Feed the Beast</span>
+        <span id="hiddenText">0xC7D1E61fEF0F18B4dc2E13eff4CBe2B97200B09F</span>
     </div>
 </body>
 
 </html>
+
 
 
 
