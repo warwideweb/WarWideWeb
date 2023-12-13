@@ -11,36 +11,42 @@
             margin: 0;
             background-color: black;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        h1 {
+        #container {
             font-size: 5em;
             font-weight: bold;
             text-transform: uppercase;
             margin: 0;
-            margin-bottom: 20px; /* Add space between the title and the small text */
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
         }
 
-        p {
-            font-size: 1em; /* Adjust the size as needed */
-            margin: 0;
+        #container:hover::after {
+            content: "0xC7D1E61fEF0F18B4dc2E13eff4CBe2B97200B09F";
+            font-size: 0.2em; /* Adjust this for the size of the revealed text */
+            display: block;
+            margin-top: 20px; /* Adjust this for space between the texts */
+            text-transform: none;
+        }
+
+        #container:hover {
+            content: "";
         }
     </style>
 </head>
 
 <body>
-    <h1>Feed the Beast</h1>
-    <p>0xC7D1E61fEF0F18B4dc2E13eff4CBe2B97200B09F</p>
+    <div id="container">
+        Feed the Beast
+    </div>
 </body>
 
 </html>
 
-
-</html>
 
 
